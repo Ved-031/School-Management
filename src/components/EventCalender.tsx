@@ -1,9 +1,9 @@
 "use client";
 
-import Image from 'next/image';
 import { useState } from 'react';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
+import { BsThreeDots } from 'react-icons/bs';
 
 type ValuePiece = Date | null;
 type Value = ValuePiece | [ValuePiece, ValuePiece];
@@ -38,7 +38,7 @@ const EventCalender = () => {
             <Calendar onChange={onChange} value={value} />
             <div className='flex items-center justify-between'>
                 <h1 className='text-lg font-semibold my-4'>Events</h1>
-                <Image src="/moreDark.png" alt='' width={18} height={18} className='cursor-pointer' />
+                <BsThreeDots className='cursor-pointer h-6 w-6 text-black' />
             </div>
             <div className='flex flex-col gap-4'>
                 {

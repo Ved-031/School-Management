@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { RadialBarChart, RadialBar, Legend, ResponsiveContainer } from "recharts";
+import { BsThreeDots } from "react-icons/bs";
+import { RadialBarChart, RadialBar, ResponsiveContainer } from "recharts";
 
 const data = [
     {
@@ -27,7 +28,7 @@ const CountChart = () => {
         {/* TITLE */}
         <div className="flex items-center justify-between">
             <h1 className="text-lg font-semibold">Students</h1>
-            <Image src='/moreDark.png' alt="" width={18} height={18} className="cursor-pointer" />
+            <BsThreeDots className='cursor-pointer h-6 w-6 text-black' />
         </div>
         {/* CHART */}
         <div className="w-full h-[75%] relative">

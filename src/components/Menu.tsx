@@ -4,7 +4,7 @@ import { role } from "@/lib/data";
 
 const menuItems = [
   {
-    title: "MENU",
+    title: "Menu",
     items: [
       {
         icon: "/home.png",
@@ -93,7 +93,7 @@ const menuItems = [
     ],
   },
   {
-    title: "OTHER",
+    title: "Other",
     items: [
       {
         icon: "/profile.png",
@@ -124,12 +124,15 @@ const Menu = () => {
       {
         menuItems.map(i => (
           <div key={i.title} className="flex flex-col gap-2">
-            <span className="hidden lg:block text-gray-400 font-light mt-4 mb-2">{i.title}</span>
+            <span className="hidden lg:block text-black font-medium mt-4 mb-2">{i.title}</span>
             {
               i.items.map(item => {
                 if(item.visible.includes(role)) {
                   return (
-                    <Link href={item.href} key={item.label} className="flex items-center justify-center lg:justify-start gap-3 text-gray-500 py-2 md:py-1 rounded-md hover:bg-skyLight md:px-2 transition-all">
+                    <Link 
+                      key={item.label} 
+                      href={item.href} 
+                      className="flex items-center justify-center lg:justify-start gap-3 text-gray-700 py-2 md:py-1 rounded-md hover:bg-skyLight md:px-2 transition-all">
                       <Image src={item.icon} alt="" width={15} height={15} />
                       <span className="hidden lg:block">{item.label}</span>
                     </Link>

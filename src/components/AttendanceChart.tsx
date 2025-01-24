@@ -1,6 +1,6 @@
 "use client";
 
-import Image from 'next/image';
+import { BsThreeDots } from 'react-icons/bs';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const data = [
@@ -37,7 +37,7 @@ const AttendanceChart = () => {
             {/* TITLE */}
             <div className='flex items-center justify-between'>
                 <h1 className='text-lg font-semibold'>Attendance</h1>
-                <Image src="/moreDark.png" alt='' height={18} width={18} className='cursor-pointer' />
+                <BsThreeDots className='cursor-pointer h-6 w-6 text-black' />
             </div>
             {/* CHART */}
             <ResponsiveContainer width="100%" height="90%">
