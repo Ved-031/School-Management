@@ -1,0 +1,211 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider     = "mongodb"
+  url          = env("DATABASE_URL")
+  relationMode = "prisma"
+}
+
+model Admin {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  username  String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Student {
+  id          String       @id @default(auto()) @map("_id") @db.ObjectId
+  username    String       @unique
+  firstname    String
+  lastname    String
+  email       String?      @unique
+  phone       String?      @unique
+  address     String
+  img         String?
+  bloodType   String
+  gender      Gender
+  parentId    String       @db.ObjectId
+  parent      Parent       @relation(fields: [parentId], references: [id])
+  classId     String       @db.ObjectId
+  class       Class        @relation(fields: [classId], references: [id])
+  gradeId     String       @db.ObjectId
+  grade       Grade        @relation(fields: [gradeId], references: [id])
+  attendances Attendance[]
+  results     Result[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Teacher {
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  username   String    @unique
+  firstname   String
+  lastname   String
+  email      String?   @unique
+  phone      String?   @unique
+  address    String
+  img        String?
+  bloodType  String
+  gender     Gender
+  subjectIDs String[]  @db.ObjectId
+  subjects   Subject[] @relation(fields: [subjectIDs], references: [id])
+  lessons    Lesson[]
+  classes    Class[]
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+model Parent {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  username  String    @unique
+  firstname  String
+  lastname  String
+  email     String?   @unique
+  phone     String    @unique
+  address   String
+  students  Student[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Subject {
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  name       String    @unique
+  teacherIDs String[]  @db.ObjectId
+  teachers   Teacher[] @relation(fields: [teacherIDs], references: [id])
+  lessonIDs  String[]  @db.ObjectId
+  lessons    Lesson[]
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+model Class {
+  id            String         @id @default(auto()) @map("_id") @db.ObjectId
+  name          String         @unique
+  capacity      Int
+  lessons       Lesson[]
+  students      Student[]
+  events        Event[]
+  announcements Announcement[]
+  supervisiorId String         @db.ObjectId
+  supervisior   Teacher        @relation(fields: [supervisiorId], references: [id], onDelete: Cascade)
+  gradeId       String         @db.ObjectId
+  grade         Grade          @relation(fields: [gradeId], references: [id], onDelete: Cascade)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model Lesson {
+  id          String       @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  day         Day
+  startTime   DateTime
+  endTime     DateTime
+  exams       Exam[]
+  assignments Assignment[]
+  attendances Attendance[]
+  subjectId   String       @db.ObjectId
+  subject     Subject      @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  classId     String       @db.ObjectId
+  class       Class        @relation(fields: [classId], references: [id], onDelete: Cascade)
+  teacherId   String       @db.ObjectId
+  teacher     Teacher      @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Grade {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  level     Int       @unique
+  students  Student[]
+  classes   Class[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Exam {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  startTime DateTime
+  endTime   DateTime
+  lessonId  String   @db.ObjectId
+  lesson    Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  results   Result[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Assignment {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  startDate DateTime
+  dueDate   DateTime
+  lessonId  String   @db.ObjectId
+  lesson    Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  results   Result[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Result {
+  id           String      @id @default(auto()) @map("_id") @db.ObjectId
+  score        Int
+  studentId    String      @db.ObjectId
+  student      Student     @relation(fields: [studentId], references: [id])
+  examId       String?     @db.ObjectId
+  exam         Exam?       @relation(fields: [examId], references: [id])
+  assignmentId String?     @db.ObjectId
+  assignment   Assignment? @relation(fields: [assignmentId], references: [id])
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+}
+
+model Attendance {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  date      DateTime
+  present   Boolean
+  studentId String   @db.ObjectId
+  student   Student  @relation(fields: [studentId], references: [id])
+  lessonId  String   @db.ObjectId
+  lesson    Lesson   @relation(fields: [lessonId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Event {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String
+  startDate   DateTime
+  endDate     DateTime
+  classId     String?  @db.ObjectId
+  class       Class?   @relation(fields: [classId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Announcement {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String
+  date        DateTime
+  classId     String?  @db.ObjectId
+  class       Class?   @relation(fields: [classId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum Day {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+}

@@ -3,25 +3,19 @@ import Image from "next/image";
 import { BsSortUp } from "react-icons/bs";
 import { FaRegEye } from "react-icons/fa";
 import { IoFilterOutline } from "react-icons/io5";
-import { role, teachersData } from "@/lib/data";
+
+import { role } from "@/lib/data";
+import prisma from "@/lib/prisma";
+import { ITEM_PER_PAGE } from "@/lib/settings";
+import { Class, Prisma, Subject, Teacher } from "@prisma/client";
 
 import Table from "@/components/Table";
+import FormModal from "@/components/FormModal";
 import Pagination from "@/components/Pagination";
 import TableSearch from "@/components/TableSearch";
-import FormModal from "@/components/FormModal";
 
 
-type Teacher = {
-  id: string;
-  teacherId: string;
-  name: string;
-  email: string;
-  photo: string;
-  phone: string;
-  subjects: string[];
-  classes: string[];
-  address: string;
-}
+type TeacherList = Teacher & { subjects: Subject[] } & { classes: Class[] }
 
 const columns = [
   {
@@ -59,41 +53,89 @@ const columns = [
   },
 ]
 
-const TeachersListPage = () => {
+const renderRow = (item: TeacherList) => {
+  return (
+    <tr key={item.id} className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-purpleLight">
+      <td className="flex items-center gap-4 p-4">
+        <Image src={item.img || "/noAvatar.jpg"} alt="" width={40} height={40} className="rounded-full md:hidden xl:block w-10 h-10 object-cover" />
+        <div className="flex flex-col items-start gap-1">
+          <h3 className="font-semibold">{item.firstname + " " + item.lastname}</h3>
+          <span className="text-sm text-gray-500">{item?.email}</span>
+        </div>
+      </td>
+      <td className="hidden md:table-cell">{item.username}</td>
+      <td className="hidden md:table-cell">{item.subjects.map((subject) => subject.name).join(", ")}</td>
+      <td className="hidden md:table-cell">{item.classes.map((item) => item.name).join(", ")}</td>
+      <td className="hidden lg:table-cell">{item.phone}</td>
+      <td className="hidden lg:table-cell">{item.address}</td>
+      {/* ACTIONS */}
+      <td>
+        <div className="flex items-center gap-2">
+          <Link href={`/list/teachers/${item.id}`}>
+            <button className="border border-gray-200 bg-gray-300/20 rounded-md px-2 py-2 hover:bg-gray-300/50 transition-all text-black flex items-center justify-center">
+              <FaRegEye className="w-4 h-4" />
+            </button>
+          </Link>
+          {
+            role === "admin" && (
+              <FormModal table="teacher" type="delete" id={item.id} />
+            )
+          }
+        </div>
+      </td>
+    </tr>
+  )
+}
 
-  const renderRow = (item: Teacher) => {
-    return (
-      <tr key={item.id} className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-purpleLight">
-        <td className="flex items-center gap-4 p-4">
-          <Image src={item.photo} alt="" width={40} height={40} className="rounded-full md:hidden xl:block w-10 h-10 object-cover" />
-          <div className="flex flex-col items-start gap-1">
-            <h3 className="font-semibold">{item.name}</h3>
-            <span className="text-sm text-gray-500">{item?.email}</span>
-          </div>
-        </td>
-        <td className="hidden md:table-cell">{item.teacherId}</td>
-        <td className="hidden md:table-cell">{item.subjects.join(",")}</td>
-        <td className="hidden md:table-cell">{item.classes.join(",")}</td>
-        <td className="hidden lg:table-cell">{item.phone}</td>
-        <td className="hidden lg:table-cell">{item.address}</td>
-        {/* ACTIONS */}
-        <td>
-          <div className="flex items-center gap-2">
-            <Link href={`/list/teachers/${item.id}`}>
-              <button className="border border-gray-200 bg-gray-300/20 rounded-md px-2 py-2 hover:bg-gray-300/50 transition-all text-black flex items-center justify-center">
-                <FaRegEye className="w-4 h-4" />
-              </button>
-            </Link>
-            {
-              role === "admin" && (
-                <FormModal table="teacher" type="delete" id={item.id} />
-              )
+const TeachersListPage = async ({ searchParams }: { searchParams: { [key: string]: string | undefined } }) => {
+
+  const { page, ...queryParams } = searchParams;
+  const p = page ? parseInt(page) : 1;
+
+  const query: Prisma.TeacherWhereInput = {};
+
+  // URL PARAMS CONDITIONS
+  if(queryParams){
+    for(const [key, value] of Object.entries(queryParams)){
+      if(value !== undefined){
+        switch(key){
+          case "classId":
+            query.lessons = {
+              some: {
+                classId: value,
+              }
             }
-          </div>
-        </td>
-      </tr>
-    )
+            break;
+          case "search":
+            query.firstname = {
+              contains: value,
+              mode: "insensitive",
+            }
+            break;
+          default: 
+            break;
+        }
+      }
+    }
   }
+
+  const [data, teacherCount] = await prisma.$transaction([
+    prisma.teacher.findMany({
+      where: query,
+      include: {
+        subjects: true,
+        classes: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      take: ITEM_PER_PAGE,
+      skip: ITEM_PER_PAGE * (p - 1),
+    }),
+    prisma.teacher.count({
+      where: query,
+    }),
+  ])
 
   return (
     <div className='bg-white rounded-xl p-4 flex-1 m-4 mt-0'>
@@ -119,9 +161,9 @@ const TeachersListPage = () => {
         </div>
       </div>
       {/* LIST */}
-      <Table columns={columns} renderRow={renderRow} data={teachersData} />
+      <Table columns={columns} renderRow={renderRow} data={data} />
       {/* PAGINATION */}
-      <Pagination />
+      <Pagination page={p} count={teacherCount} />
     </div>
   )
 }

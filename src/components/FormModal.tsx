@@ -89,6 +89,7 @@ const FormModal = ({ table, type, data, id, className }: FormModalProps) => {
 
   const Form = () => {
     return type === "delete" && id ? (
+        // DELETE FORM
         <form onSubmit={handleDelete} className="flex flex-col gap-4 p-4">
           {/* TITLE AND DESCRIPTION */}
           <div className="flex flex-col items-start gap-1">

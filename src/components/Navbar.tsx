@@ -1,8 +1,15 @@
 import Image from "next/image";
-import { AiOutlineMessage } from "react-icons/ai";
 import { IoIosSearch } from "react-icons/io";
+import { AiOutlineMessage } from "react-icons/ai";
 
-const Navbar = () => {
+import { UserButton } from "@clerk/nextjs";
+import { currentUser } from "@clerk/nextjs/server";
+
+
+const Navbar = async () => {
+
+  const user = await currentUser();
+
   return (
     <div className='flex items-start justify-between p-4'>
       {/* SEARCH BAR */}
@@ -13,9 +20,6 @@ const Navbar = () => {
       </div>
       {/* ICONS AND USER */}
       <div className="flex items-center gap-6 justify-end w-full">
-        {/* <div className="rounded-full flex items-center justify-center w-7 h-7 cursor-pointer">
-          <Image src="/message.png" alt="" width={20} height={20} />
-        </div> */}
         <AiOutlineMessage className="h-5 w-5 text-gray-600 cursor-pointer" /> 
         <div className="rounded-full flex items-center justify-center w-7 h-7 cursor-pointer relative">
           <Image src="/announcement.png" alt="" width={20} height={20} />
@@ -23,9 +27,9 @@ const Navbar = () => {
         </div>
         <div className="flex flex-col">
           <span className="text-sm leading-3 font-medium">John Doe</span>
-          <span className="text-[10px] text-right text-gray-500">Admin</span>
+          <span className="text-[10px] text-right text-gray-500 capitalize">{user?.publicMetadata.role as string}</span>
         </div>
-        <Image src="/avatar.png" alt="" width={36} height={36} className="rounded-full" />
+        <UserButton />
       </div>
     </div>
   )

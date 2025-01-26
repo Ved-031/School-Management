@@ -1,6 +1,10 @@
 import { BsSortUp } from "react-icons/bs";
 import { IoFilterOutline } from "react-icons/io5";
-import { resultsData, role } from "@/lib/data";
+
+import prisma from "@/lib/prisma";
+import { role } from "@/lib/data";
+import { Prisma } from "@prisma/client";
+import { ITEM_PER_PAGE } from "@/lib/settings";
 
 import Table from "@/components/Table";
 import FormModal from "@/components/FormModal";
@@ -8,26 +12,28 @@ import Pagination from "@/components/Pagination";
 import TableSearch from "@/components/TableSearch";
 
 
-type Result = {
+type ResultList = {
     id: string;
-    subject: string;
-    class: string;
-    teacher: string;
-    student: string;
-    date: string;
-    type: "exam" | "assignment";
+    title: string;
+    studentFirstname: string;
+    studentLastname: string;
+    teacherFirstname: string;
+    teacherLastname: string;
     score: number;
-}
+    className: string;
+    startTime: Date;
+    type: "Exam" | "Assignment";
+};
 
 const columns = [
     {
-        header: "Student Name",
-        accessor: "student",
+        header: "Title",
+        accessor: "title",
+        className: "hidden md:table-cell"
     },
     {
-        header: "Subject",
-        accessor: "subject",
-        className: "hidden md:table-cell"
+        header: "Student Name",
+        accessor: "student",
     },
     {
         header: "Class",
@@ -59,34 +65,119 @@ const columns = [
     },
 ];
 
-const ResultsListPage = () => {
+const renderRow = (item: ResultList) => {
+    return (
+        <tr key={item.id} className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-purpleLight">
+            <td className="hidden md:table-cell">{item.title}</td>
+            <td className="p-4">{item.studentFirstname + " " + item.studentLastname}</td>
+            <td className="hidden lg:table-cell">{item.className}</td>
+            <td className="hidden lg:table-cell">{item.teacherFirstname + " " + item.teacherLastname}</td>
+            <td className="hidden lg:table-cell">{new Intl.DateTimeFormat("en-US").format(item.startTime)}</td>
+            <td className="hidden lg:table-cell capitalize">{item.type}</td>
+            <td className="">{item.score}</td>
+            {/* ACTIONS */}
+            <td>
+                <div className="flex items-center gap-2">
+                    {
+                        role === "admin" && (
+                            <>
+                                <FormModal table="result" type="update" id={item.id} data={item} />
+                                <FormModal table="result" type="delete" id={item.id} />
+                            </>
+                        )
+                    }
+                </div>
+            </td>
+        </tr>
+    )
+}
 
-    const renderRow = (item: Result) => {
-        return (
-            <tr key={item.id} className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-purpleLight">
-                <td className="p-4">{item.student}</td>
-                <td className="hidden md:table-cell">{item.subject}</td>
-                <td className="hidden lg:table-cell">{item.class}</td>
-                <td className="hidden lg:table-cell">{item.teacher}</td>
-                <td className="hidden lg:table-cell">{item.date}</td>
-                <td className="hidden lg:table-cell capitalize">{item.type}</td>
-                <td className="">{item.score}</td>
-                {/* ACTIONS */}
-                <td>
-                    <div className="flex items-center gap-2">
-                        {
-                            role === "admin" && (
-                                <>
-                                    <FormModal table="result" type="update" id={item.id} data={item} />
-                                    <FormModal table="result" type="delete" id={item.id} />
-                                </>
-                            )
-                        }
-                    </div>
-                </td>
-            </tr>
-        )
+const ResultsListPage = async ({ searchParams }: { searchParams: { [key: string]: string | undefined } }) => {
+
+    const { page, ...queryParams } = searchParams;
+
+    const p = page ? parseInt(page) : 1;
+
+    const query: Prisma.ResultWhereInput = {};
+
+    // URL PARAMS CONDITIONS
+    if (queryParams) {
+        for (const [key, value] of Object.entries(queryParams)) {
+            if (value !== undefined) {
+                switch (key) {
+                    case "studentId":
+                        query.studentId = value;
+                        break;
+                    case "search":
+                        query.OR = [
+                            { exam: { title: { contains: value, mode: "insensitive" } } },
+                            { assignment: { title: { contains: value, mode: "insensitive" } } },
+                            { student: { firstname: { contains: value, mode: "insensitive" } } },
+                        ]
+                        break;
+                    default: 
+                        break;
+                }
+            }
+        }
     }
+
+    const [dataRes, resultCount] = await prisma.$transaction([
+        prisma.result.findMany({
+            where: query,
+            include: {
+                student: {
+                    select: { firstname: true, lastname: true }
+                },
+                exam: {
+                    include: {
+                        lesson: {
+                            include: {
+                                class: { select: { name: true } },
+                                teacher: { select: { firstname: true, lastname: true } },
+                            }
+                        }
+                    }
+                },
+                assignment: {
+                    include: {
+                        lesson: {
+                            include: {
+                                class: { select: { name: true } },
+                                teacher: { select: { firstname: true, lastname: true } },
+                            }
+                        }
+                    }
+                },
+            },
+            orderBy: {
+                createdAt: "desc",
+            },
+            take: ITEM_PER_PAGE,
+            skip: ITEM_PER_PAGE * (p - 1),
+        }),
+        prisma.result.count({
+            where: query,
+        }),
+    ])
+
+    const data = dataRes.map(item => {
+        const assessment = item.exam || item.assignment;
+        if(!assessment) return null;
+        const isExam = "startTime" in assessment;
+        return {
+            id: item.id,
+            title: assessment.title,
+            studentFirstname: item.student.firstname,
+            studentLastname: item.student.lastname,
+            teacherFirstname: assessment.lesson.teacher.firstname,
+            teacherLastname: assessment.lesson.teacher.lastname,
+            score: item.score,
+            className: assessment.lesson.class.name,
+            startTime: isExam ? assessment.startTime : assessment.startDate,
+            type: isExam ? "Exam" : "Assignment",
+        }
+    })
 
     return (
         <div className='bg-white rounded-xl p-4 flex-1 m-4 mt-0'>
@@ -112,9 +203,9 @@ const ResultsListPage = () => {
                 </div>
             </div>
             {/* LIST */}
-            <Table columns={columns} renderRow={renderRow} data={resultsData} />
+            <Table columns={columns} renderRow={renderRow} data={data} />
             {/* PAGINATION */}
-            <Pagination />
+            <Pagination count={resultCount} page={p} />
         </div>
     )
 }

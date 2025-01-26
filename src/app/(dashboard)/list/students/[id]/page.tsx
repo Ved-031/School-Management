@@ -1,12 +1,21 @@
 import Link from "next/link";
 import Image from "next/image";
 
+import prisma from "@/lib/prisma";
+
 import FormModal from "@/components/FormModal";
 import BigCalendar from "@/components/BigCalendar";
 import Announcements from "@/components/Announcements";
 import PerformanceChart from "@/components/PerformanceChart";
 
-const SingleStudentPage = ({ params }: { params: { id: string } }) => {
+const SingleStudentPage = async ({ params }: { params: { id: string } }) => {
+
+    const student = await prisma.student.findUnique({
+        where: {
+            id: params.id,
+        },
+    })
+
     return (
         <div className='flex flex-col lg:flex-row gap-4 p-4'>
             {/* LEFT */}
@@ -115,11 +124,11 @@ const SingleStudentPage = ({ params }: { params: { id: string } }) => {
                 <div className="bg-white w-full rounded-md p-4">
                     <h1 className="text-lg font-semibold">Shortcuts</h1>
                     <div className="mt-4 flex gap-4 flex-wrap text-xs text-gray-500">
-                        <Link href='' className="p-3 rounded-md bg-skyLight">Student&apos;s Lessons</Link>
-                        <Link href='' className="p-3 rounded-md bg-purpleLight">Student&apos;s Teachers</Link>
-                        <Link href='' className="p-3 rounded-md bg-yellowLight">Student&apos;s Exams</Link>
-                        <Link href='' className="p-3 rounded-md bg-pink-50">Student&apos;s Assignments</Link>
-                        <Link href='' className="p-3 rounded-md bg-skyLight">Student&apos;s Results</Link>
+                        <Link href={`/list/lessons?classId=${student?.classId}`} className="p-3 rounded-md bg-skyLight">Student&apos;s Lessons</Link>
+                        <Link href={`/list/teachers?classId=${student?.classId}`} className="p-3 rounded-md bg-purpleLight">Student&apos;s Teachers</Link>
+                        <Link href={`/list/exams?classId=${student?.classId}`} className="p-3 rounded-md bg-yellowLight">Student&apos;s Exams</Link>
+                        <Link href={`/list/assignments?classId=${student?.classId}`} className="p-3 rounded-md bg-pink-50">Student&apos;s Assignments</Link>
+                        <Link href={`/list/results?studentId=${student?.id}`} className="p-3 rounded-md bg-skyLight">Student&apos;s Results</Link>
                     </div>
                 </div>
                 <PerformanceChart />

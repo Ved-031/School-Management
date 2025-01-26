@@ -7,6 +7,7 @@ import Announcements from "@/components/Announcements";
 import PerformanceChart from "@/components/PerformanceChart";
 
 const SingleTeacherPage = ({ params }: { params: { id: string } }) => {
+
     return (
         <div className='flex flex-col lg:flex-row gap-4 p-4'>
             {/* LEFT */}
@@ -115,11 +116,11 @@ const SingleTeacherPage = ({ params }: { params: { id: string } }) => {
                 <div className="bg-white w-full rounded-md p-4">
                     <h1 className="text-lg font-semibold">Shortcuts</h1>
                     <div className="mt-4 flex gap-4 flex-wrap text-xs text-gray-500">
-                        <Link href='' className="p-3 rounded-md bg-skyLight">Tecaher&apos;s Classes</Link>
-                        <Link href='' className="p-3 rounded-md bg-purpleLight">Tecaher&apos;s Students</Link>
-                        <Link href='' className="p-3 rounded-md bg-yellowLight">Tecaher&apos;s Lessons</Link>
-                        <Link href='' className="p-3 rounded-md bg-pink-50">Tecaher&apos;s Exams</Link>
-                        <Link href='' className="p-3 rounded-md bg-skyLight">Tecaher&apos;s Assignments</Link>
+                        <Link href={`/list/classes?supervisorId=${params.id}`} className="p-3 rounded-md bg-skyLight">Tecaher&apos;s Classes</Link>
+                        <Link href={`/list/students?teacherId=${params.id}`} className="p-3 rounded-md bg-purpleLight">Tecaher&apos;s Students</Link>
+                        <Link href={`/list/lessons?teacherId=${params.id}`} className="p-3 rounded-md bg-yellowLight">Tecaher&apos;s Lessons</Link>
+                        <Link href={`/list/exams?teacherId=${params.id}`} className="p-3 rounded-md bg-pink-50">Tecaher&apos;s Exams</Link>
+                        <Link href={`/list/assignments?teacherId=${params.id}`} className="p-3 rounded-md bg-skyLight">Tecaher&apos;s Assignments</Link>
                     </div>
                 </div>
                 <PerformanceChart />
